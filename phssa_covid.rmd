@@ -31,12 +31,11 @@ ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
 # Google sheet is edited, however, there might be a less resource-intensive way
 # to periodically refresh the underlying data.
 ph_data <- read_sheet(ss, sheet = "dashboard_data")
+fac_data <- read_sheet(ss, sheet = "faculty_staff_cases")
 
 ```
 
 ```{r global, include=FALSE}
-# This helps format dates.
-date_stamp <- stamp("12/31/2021 2:03PM")
 
 # This function forces the y axis on the plots to display integers
 # from https://gist.github.com/jhrcook/eb7b63cc57c683a6eb4986c4107a88ec
@@ -61,7 +60,7 @@ Inputs {.sidebar}
 
 This COVID-19 dashboard was voluntarily created and published by [Patrick Henry School of Science and Arts](http://www.patrickhenrycharter.org/).
 
-Data is updated by the PHSSA Board as soon as it is verified.
+Data is updated by the PHSSA Board of Directors as soon as it is verified.
 
 Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
 
@@ -137,7 +136,7 @@ The total number of confirmed cases is cumulative, beginning August 8, 2021.
 
 Cases indicated on the dashboard represent students on school property while they were positive for the virus.
 
-### Total Cases
+### Total Student Cases
 
 ```{r}
 
@@ -147,11 +146,20 @@ renderValueBox({
 
 ```
 
+### Faculty/Staff Cases
+
+```{r}
+
+renderValueBox({
+  valueBox(value = nrow(fac_data))
+})
+
+```
 
 Cases Detail Table
 =====================================  
 
-### Table of Cases
+### Student Cases
 
 Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
 
@@ -164,11 +172,27 @@ ph_data_format$`Last in School` <- as_date(ph_data_format$`Last in School`)
 
 datatable(ph_data_format,
           options = list(
-            pageLength = 25
+            pageLength = 100
           ))
 ```
 
 
+### Faculty/Staff Cases
+
+Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
+
+```{r}
+fac_data_format <- fac_data %>% 
+  select("Date Positive" = Date_Pos_Test, "Last in School" = Last_in_school) %>%   arrange(desc(`Date Positive`))
+  
+fac_data_format$`Date Positive` <- as_date(fac_data_format$`Date Positive`)
+fac_data_format$`Last in School` <- as_date(fac_data_format$`Last in School`)
+
+datatable(fac_data_format,
+          options = list(
+            pageLength = 10
+          ))
+```
 
 Help & Info
 =====================================  
@@ -192,7 +216,7 @@ For questions about your PHSSA student and COVID-19, contact [Principal Fatima S
 
 ```{r}
 
-mostRecentUpdate <- date_stamp(max(ph_data$edited, na.rm = TRUE))
+mostRecentUpdate <- format(max(ph_data$edited, na.rm = TRUE), "%m/%d/%Y %I:%M%p")
 
 renderValueBox({
   valueBox(value = mostRecentUpdate,
