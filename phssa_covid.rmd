@@ -1,0 +1,202 @@
+---
+title: "PHSSA COVID-19 Dashboard"
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    logo: assets/small_tree_48.png
+resource_files:
+- assets/small_tree.png
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(googlesheets4)
+library(DT)
+library(RColorBrewer)
+library(lubridate)
+library(scales)
+
+# use this for a public Google sheet.
+gs4_deauth()
+
+# change this spreadsheet ID as needed
+
+ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
+
+# setting read_sheet in ph_data makes the dashboard update instantly when the
+# Google sheet is edited, however, there might be a less resource-intensive way
+# to periodically refresh the underlying data.
+ph_data <- read_sheet(ss, sheet = "dashboard_data")
+
+```
+
+```{r global, include=FALSE}
+# This helps format dates.
+date_stamp <- stamp("12/31/2021 2:03PM")
+
+# This function forces the y axis on the plots to display integers
+# from https://gist.github.com/jhrcook/eb7b63cc57c683a6eb4986c4107a88ec
+integer_breaks <- function (n = 5, ...){
+  fxn <- function(x) {
+    breaks <- floor(pretty(x, n, ...))
+    names(breaks) <- attr(breaks, "labels")
+    breaks
+  }
+  return(fxn)
+}
+
+
+```
+
+
+Cases by Grade/Class
+=====================================  
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+This COVID-19 dashboard was voluntarily created and published by [Patrick Henry School of Science and Arts](http://www.patrickhenrycharter.org/).
+
+Data is updated by the PHSSA Board as soon as it is verified.
+
+Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
+
+```{r}
+# shiny inputs defined here
+# selectInput("grade", "Refine by Grade:", 
+#                         choices=c("All", "K", "1", "2", "3", "4", "5"))
+
+radioButtons("grade", "Refine by Grade:", 
+                        choices=c("All", "K", "1", "2", "3", "4", "5"))
+
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### By Grade
+
+```{r}
+
+renderPlot({
+  filteredGrade <- ph_data
+  
+  if (input$grade != "All") {
+    filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
+  }
+  
+  filteredGrade %>%
+    ggplot() +
+    aes(x = Date_Pos_Test, fill = Grade) +
+    geom_bar() +
+    scale_y_continuous(breaks = integer_breaks()) +
+    scale_fill_brewer(palette = "Paired") +
+    labs(x = "Date", y = "Positive Tests") +
+    theme_minimal() +
+    theme(text = element_text(size = 16))
+  
+})
+
+```
+
+
+### By Teacher
+
+```{r}
+
+renderPlot({
+  filteredGrade <- ph_data
+  
+  if (input$grade != "All") {
+    filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
+  }
+  
+  filteredGrade %>%
+    #filter(Grade == input$grade) %>%
+    ggplot() +
+    aes(x = Date_Pos_Test, fill = Teacher) +
+    geom_bar() +
+    scale_y_continuous(breaks = integer_breaks()) +
+    scale_fill_brewer(palette = "Paired") +
+    labs(x = "Date", y = "Positive Tests") +
+    theme_minimal() +
+    theme(text = element_text(size = 16))
+  
+})
+
+```
+
+
+Column {data-width=100}
+-----------------------------------------------------------------------
+The total number of confirmed cases is cumulative, beginning August 8, 2021.  
+
+Cases indicated on the dashboard represent students on school property while they were positive for the virus.
+
+### Total Cases
+
+```{r}
+
+renderValueBox({
+  valueBox(value = nrow(ph_data))
+})
+
+```
+
+
+Cases Detail Table
+=====================================  
+
+### Table of Cases
+
+Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
+
+```{r}
+ph_data_format <- ph_data %>% 
+  select("Date Positive" = Date_Pos_Test, Grade, Teacher, "Last in School" = Last_in_school) %>%   arrange(desc(`Date Positive`))
+  
+ph_data_format$`Date Positive` <- as_date(ph_data_format$`Date Positive`)
+ph_data_format$`Last in School` <- as_date(ph_data_format$`Last in School`)
+
+datatable(ph_data_format,
+          options = list(
+            pageLength = 25
+          ))
+```
+
+
+
+Help & Info
+=====================================  
+![](assets/long_logo.png)
+
+#### Resources
+
+* [CDC Guidance for COVID-19 Prevention in K-12 Schools](https://www.cdc.gov/coronavirus/2019-ncov/community/schools-childcare/k-12-guidance.html)
+* [CDC Mask Guidance](https://www.cdc.gov/coronavirus/2019-ncov/prevent-getting-sick/diy-cloth-face-coverings.html)
+* [VDH COVID-19 Resources](https://www.vdh.virginia.gov/coronavirus/#COVID-19-resources)
+
+#### Questions?
+
+For questions about this data, contact [Ann-Alyssa Hill](mailto:ann-alyssa.hill@patrickhenrycharter.org)  
+
+For questions about your PHSSA student and COVID-19, contact [Principal Fatima Smith](mailto:fsmith3@rvaschools.net) or [Nurse Ta'Meia Farina](mailto:tfarina@rvaschools.net)
+
+
+
+### Last Update
+
+```{r}
+
+mostRecentUpdate <- date_stamp(max(ph_data$edited, na.rm = TRUE))
+
+renderValueBox({
+  valueBox(value = mostRecentUpdate,
+           caption = )
+  
+})
+```
