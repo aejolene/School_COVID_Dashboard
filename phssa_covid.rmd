@@ -33,6 +33,10 @@ ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
 ph_data <- read_sheet(ss, sheet = "dashboard_data")
 fac_data <- read_sheet(ss, sheet = "faculty_staff_cases")
 
+caseCount <- nrow(ph_data)
+
+enrolledNum <- "" #Total number of enrolled students
+
 ```
 
 ```{r global, include=FALSE}
@@ -141,10 +145,21 @@ Cases indicated on the dashboard represent students on school property while the
 ```{r}
 
 renderValueBox({
-  valueBox(value = nrow(ph_data))
+  valueBox(value = caseCount)
 })
 
 ```
+
+<!-- ### Percent of Enrolled Students -->
+
+```{r}
+ 
+# renderValueBox({
+#   valueBox(value = percent(caseCount/enrolledNum))
+# })
+
+```
+
 
 ### Faculty/Staff Cases
 
@@ -172,7 +187,10 @@ ph_data_format$`Last in School` <- as_date(ph_data_format$`Last in School`)
 
 datatable(ph_data_format,
           options = list(
-            pageLength = 100
+            columnDefs = 
+              list(list(className = 'dt-center', 
+                        targets = "_all")),
+            pageLength = 10
           ))
 ```
 
@@ -184,12 +202,15 @@ Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7F
 ```{r}
 fac_data_format <- fac_data %>% 
   select("Date Positive" = Date_Pos_Test, "Last in School" = Last_in_school) %>%   arrange(desc(`Date Positive`))
-  
+
 fac_data_format$`Date Positive` <- as_date(fac_data_format$`Date Positive`)
 fac_data_format$`Last in School` <- as_date(fac_data_format$`Last in School`)
 
 datatable(fac_data_format,
           options = list(
+            columnDefs = 
+              list(list(className = 'dt-center', 
+                        targets = "_all")),
             pageLength = 10
           ))
 ```
