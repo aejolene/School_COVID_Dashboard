@@ -32,6 +32,11 @@ ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
 # to periodically refresh the underlying data.
 ph_data <- read_sheet(ss, sheet = "dashboard_data")
 fac_data <- read_sheet(ss, sheet = "faculty_staff_cases")
+quar_data <- read_sheet(ss, sheet = "quarantined_classrooms") 
+
+updateTime <- read_sheet(ss, sheet = "info", range = "F5", col_names = FALSE) %>% 
+  rename("time" = "...1") %>% 
+  mutate(time = format(time, "%m/%d/%Y %I:%M%p"))
 
 caseCount <- nrow(ph_data)
 
@@ -171,9 +176,9 @@ renderValueBox({
 
 ```
 
-Cases Detail Table
-=====================================  
 
+Cases Detail Tables
+=====================================  
 ### Student Cases
 
 Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
@@ -194,10 +199,8 @@ datatable(ph_data_format,
           ))
 ```
 
-
 ### Faculty/Staff Cases
 
-Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
 
 ```{r}
 fac_data_format <- fac_data %>% 
@@ -214,6 +217,43 @@ datatable(fac_data_format,
             pageLength = 10
           ))
 ```
+Quarantines
+===================================== 
+### Currently Quarantined Classrooms
+
+This table shows **actively** quarantined classes. Quarantined students should obtain a PCR test **on or after** the Earliest Test Date shown.
+
+```{r}
+
+quar_data_format <- quar_data %>%
+  select(
+    Teacher,
+    Grade,
+    "Begin Date" = Begin_Date,
+    "End Date" = End_Date,
+    "Date of Last Exposure" = Date_Last_Exposure,
+    "Earliest Test Date" = Earliest_Test_Date
+  ) %>%   
+  arrange(`End Date`) %>% 
+  filter(as_date(`End Date`) >= today())
+
+quar_data_format$`Begin Date` <- as_date(quar_data_format$`Begin Date`)
+quar_data_format$`End Date` <- as_date(quar_data_format$`End Date`)
+quar_data_format$`Date of Last Exposure` <- as_date(quar_data_format$`Date of Last Exposure`)
+quar_data_format$`Earliest Test Date` <- as_date(quar_data_format$`Earliest Test Date`)
+
+
+
+datatable(quar_data_format,
+          options = list(
+            columnDefs = 
+              list(list(className = 'dt-center', 
+                        targets = "_all")),
+            pageLength = 25
+          ))
+
+```
+
 
 Help & Info
 =====================================  
@@ -233,14 +273,16 @@ For questions about your PHSSA student and COVID-19, contact [Principal Fatima S
 
 
 
+The date below reflects any edit to the back-end spreadsheet, not necessarily the addition of new cases.
+
 ### Last Update
 
 ```{r}
 
-mostRecentUpdate <- format(max(ph_data$edited, na.rm = TRUE), "%m/%d/%Y %I:%M%p")
+#mostRecentUpdate <- format, "%m/%d/%Y %I:%M%p")
 
 renderValueBox({
-  valueBox(value = mostRecentUpdate,
+  valueBox(value = updateTime,
            caption = )
   
 })
