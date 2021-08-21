@@ -65,7 +65,7 @@ integer_breaks <- function (n = 5, ...){
 ```
 
 
-Cases by Grade/Class
+Active Cases
 =====================================  
 
 Inputs {.sidebar}
@@ -76,6 +76,120 @@ This COVID-19 dashboard was voluntarily created and published by [Patrick Henry 
 Data is updated by the PHSSA Board of Directors as soon as it is verified. Cases indicated on the dashboard represent students on school property while they were positive for the virus.  
 
 Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
+
+```{r}
+
+radioButtons("grade", "Refine by Grade:", 
+                        choices=c("All", "K", "1", "2", "3", "4", "5"))
+
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### By Grade
+
+```{r}
+
+renderPlot({
+  filteredGrade <- ph_data %>% 
+    filter(Status == "Active")
+  
+  if (input$grade != "All") {
+    filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
+  }
+  
+  filteredGrade %>%
+    ggplot() +
+    aes(x = Date_Pos_Test, fill = Grade) +
+    geom_bar() +
+    scale_y_continuous(breaks = integer_breaks()) +
+    scale_fill_brewer(palette = "Paired") +
+    labs(x = "Date", y = "Positive Tests") +
+    theme_minimal() +
+    theme(text = element_text(size = 16))
+  
+})
+
+```
+
+
+### By Teacher
+
+```{r}
+
+renderPlot({
+  filteredGrade <- ph_data %>% 
+    filter(Status == "Active")
+  
+  if (input$grade != "All") {
+    filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
+  }
+  
+  filteredGrade %>%
+    #filter(Grade == input$grade) %>%
+    ggplot() +
+    aes(x = Date_Pos_Test, fill = Teacher) +
+    geom_bar() +
+    scale_y_continuous(breaks = integer_breaks()) +
+    scale_fill_brewer(palette = "Paired") +
+    labs(x = "Date", y = "Positive Tests") +
+    theme_minimal() +
+    theme(text = element_text(size = 16))
+  
+})
+
+```
+
+
+Column {data-width=100}
+-----------------------------------------------------------------------
+Active Student Cases are positives cases whose status is currently impacting isolation/quarantine measures.  
+
+### Active Student Cases
+
+```{r}
+
+activeCases <- ph_data %>%
+  filter(`Status` == "Active") %>%
+  nrow()
+
+renderValueBox({
+  valueBox(value = activeCases)
+})
+
+```
+
+### Active Cases/All Students
+
+```{r}
+
+renderValueBox({
+  valueBox(value = percent(activeCases/enrolledNum))
+})
+
+```
+
+
+### Active Faculty/Staff Cases
+
+```{r}
+
+activeFac <- fac_data %>% 
+  filter(Status == "Active")
+
+renderValueBox({
+  valueBox(value = nrow(activeFac))
+})
+
+```
+
+Cumulative Cases
+=====================================  
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+This page shows information about all COVID-19 cases over time.  
 
 ```{r}
 
@@ -144,8 +258,6 @@ Column {data-width=100}
 -----------------------------------------------------------------------
 Total Student Cases are cumulative, beginning August 8, 2021.  
 
-Active Student Cases are positives cases whose status is currently impacting isolation/quarantine measures.  
-
 ### Total Student Cases
 
 ```{r}
@@ -158,26 +270,13 @@ renderValueBox({
 
 ```
 
-### Active Student Cases
 
-```{r}
-
-activeCases <- ph_data %>%
-  filter(`Status` == "Active") %>%
-  nrow()
-
-renderValueBox({
-  valueBox(value = activeCases)
-})
-
-```
-
-### Active Cases/All Students
+### Total Cases/All Students
 
 ```{r}
 
 renderValueBox({
-  valueBox(value = percent(activeCases/enrolledNum))
+  valueBox(value = percent(caseCount/enrolledNum))
 })
 
 ```
@@ -192,7 +291,6 @@ renderValueBox({
 })
 
 ```
-
 
 Cases Detail Tables
 =====================================  
