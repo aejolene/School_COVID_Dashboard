@@ -30,17 +30,21 @@ ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
 # setting read_sheet in ph_data makes the dashboard update instantly when the
 # Google sheet is edited, however, there might be a less resource-intensive way
 # to periodically refresh the underlying data.
-ph_data <- read_sheet(ss, sheet = "dashboard_data")
-fac_data <- read_sheet(ss, sheet = "faculty_staff_cases")
+ph_data <- read_sheet(ss, sheet = "dashboard_data") %>% 
+  mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive"))
+
+fac_data <- read_sheet(ss, sheet = "faculty_staff_cases") %>% 
+  mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive"))
+
 quar_data <- read_sheet(ss, sheet = "quarantined_classrooms") 
 
 updateTime <- read_sheet(ss, sheet = "info", range = "F5", col_names = FALSE) %>% 
   rename("time" = "...1") %>% 
   mutate(time = format(time, "%m/%d/%Y %I:%M%p"))
 
-caseCount <- nrow(ph_data)
 
-enrolledNum <- "" #Total number of enrolled students
+
+enrolledNum <- 331 #Total number of enrolled students
 
 ```
 
@@ -69,14 +73,11 @@ Inputs {.sidebar}
 
 This COVID-19 dashboard was voluntarily created and published by [Patrick Henry School of Science and Arts](http://www.patrickhenrycharter.org/).
 
-Data is updated by the PHSSA Board of Directors as soon as it is verified.
+Data is updated by the PHSSA Board of Directors as soon as it is verified. Cases indicated on the dashboard represent students on school property while they were positive for the virus.  
 
 Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
 
 ```{r}
-# shiny inputs defined here
-# selectInput("grade", "Refine by Grade:", 
-#                         choices=c("All", "K", "1", "2", "3", "4", "5"))
 
 radioButtons("grade", "Refine by Grade:", 
                         choices=c("All", "K", "1", "2", "3", "4", "5"))
@@ -141,13 +142,15 @@ renderPlot({
 
 Column {data-width=100}
 -----------------------------------------------------------------------
-The total number of confirmed cases is cumulative, beginning August 8, 2021.  
+Total Student Cases are cumulative, beginning August 8, 2021.  
 
-Cases indicated on the dashboard represent students on school property while they were positive for the virus.
+Active Student Cases are positives cases whose status is currently impacting isolation/quarantine measures.  
 
 ### Total Student Cases
 
 ```{r}
+
+caseCount <- nrow(ph_data)
 
 renderValueBox({
   valueBox(value = caseCount)
@@ -155,18 +158,32 @@ renderValueBox({
 
 ```
 
-<!-- ### Percent of Enrolled Students -->
+### Active Student Cases
 
 ```{r}
- 
-# renderValueBox({
-#   valueBox(value = percent(caseCount/enrolledNum))
-# })
+
+activeCases <- ph_data %>%
+  filter(`Status` == "Active") %>%
+  nrow()
+
+renderValueBox({
+  valueBox(value = activeCases)
+})
+
+```
+
+### Active Cases/All Students
+
+```{r}
+
+renderValueBox({
+  valueBox(value = percent(activeCases/enrolledNum))
+})
 
 ```
 
 
-### Faculty/Staff Cases
+### Total Faculty/Staff Cases
 
 ```{r}
 
@@ -185,7 +202,8 @@ Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7F
 
 ```{r}
 ph_data_format <- ph_data %>% 
-  select("Date Positive" = Date_Pos_Test, Grade, Teacher, "Last in School" = Last_in_school) %>%   arrange(desc(`Date Positive`))
+  select("Date Positive" = Date_Pos_Test, Grade, Teacher, "Last in School" = Last_in_school, "Status") %>%
+  arrange(desc(`Date Positive`))
   
 ph_data_format$`Date Positive` <- as_date(ph_data_format$`Date Positive`)
 ph_data_format$`Last in School` <- as_date(ph_data_format$`Last in School`)
@@ -196,7 +214,9 @@ datatable(ph_data_format,
               list(list(className = 'dt-center', 
                         targets = "_all")),
             pageLength = 10
-          ))
+           )) %>% 
+           formatStyle("Status", backgroundColor = styleEqual("Active", "rgb(251,154,153,1)"))
+
 ```
 
 ### Faculty/Staff Cases
@@ -204,7 +224,7 @@ datatable(ph_data_format,
 
 ```{r}
 fac_data_format <- fac_data %>% 
-  select("Date Positive" = Date_Pos_Test, "Last in School" = Last_in_school) %>%   arrange(desc(`Date Positive`))
+  select("Date Positive" = Date_Pos_Test, "Last in School" = Last_in_school, "Status") %>%   arrange(desc(`Date Positive`))
 
 fac_data_format$`Date Positive` <- as_date(fac_data_format$`Date Positive`)
 fac_data_format$`Last in School` <- as_date(fac_data_format$`Last in School`)
@@ -215,13 +235,24 @@ datatable(fac_data_format,
               list(list(className = 'dt-center', 
                         targets = "_all")),
             pageLength = 10
-          ))
+          ))  %>% 
+          formatStyle("Status", backgroundColor = styleEqual("Active", "rgb(251,154,153,1)"))
 ```
 Quarantines
 ===================================== 
 ### Currently Quarantined Classrooms
 
-This table shows **actively** quarantined classes. Quarantined students should obtain a PCR test **on or after** the Earliest Test Date shown.
+This table shows **actively** quarantined classes. Quarantined students should obtain a PCR test **on or after** the Earliest Test Date shown. 
+  
+08/19/2021 NOTE:  
+Some of the dates below have been corrected. The basis of testing date is the date of first exposure. Testing should occur 5-7 days from first exposure.  
+  
+Quarantine Guidance:  
+
+[CDC guidance](https://www.cdc.gov/coronavirus/2019-ncov/if-you-are-sick/quarantine.html)  
+- Stay home for 14 days after your last contact with a person who has COVID-19.  
+- Watch for fever (100.4◦F), cough, shortness of breath, or other symptoms of COVID-19.  
+- If possible, stay away from people you live with, especially people who are at higher risk for getting very sick from COVID-19.  
 
 ```{r}
 
@@ -230,16 +261,16 @@ quar_data_format <- quar_data %>%
     Teacher,
     Grade,
     "Begin Date" = Begin_Date,
-    "End Date" = End_Date,
-    "Date of Last Exposure" = Date_Last_Exposure,
+    "Return Date" = Return_Date,
+    "Date of Exposure" = Date_of_Exposure,
     "Earliest Test Date" = Earliest_Test_Date
   ) %>%   
-  arrange(`End Date`) %>% 
-  filter(as_date(`End Date`) >= today())
+  arrange(`Return Date`) %>% 
+  filter(as_date(`Return Date`) >= today())
 
 quar_data_format$`Begin Date` <- as_date(quar_data_format$`Begin Date`)
-quar_data_format$`End Date` <- as_date(quar_data_format$`End Date`)
-quar_data_format$`Date of Last Exposure` <- as_date(quar_data_format$`Date of Last Exposure`)
+quar_data_format$`Return Date` <- as_date(quar_data_format$`Return Date`)
+quar_data_format$`Date of Exposure` <- as_date(quar_data_format$`Date of Exposure`)
 quar_data_format$`Earliest Test Date` <- as_date(quar_data_format$`Earliest Test Date`)
 
 
@@ -255,9 +286,10 @@ datatable(quar_data_format,
 ```
 
 
-Help & Info
+Help & Info {data-orientation=rows}
 =====================================  
-![](assets/long_logo.png)
+
+[![](assets/long_logo.png)](http://www.patrickhenrycharter.org)
 
 #### Resources
 
@@ -269,7 +301,13 @@ Help & Info
 
 For questions about this data, contact [Ann-Alyssa Hill](mailto:ann-alyssa.hill@patrickhenrycharter.org)  
 
-For questions about your PHSSA student and COVID-19, contact [Principal Fatima Smith](mailto:fsmith3@rvaschools.net) or [Nurse Ta'Meia Farina](mailto:tfarina@rvaschools.net)
+For questions about your PHSSA student and COVID-19, contact [Principal Fatima Smith](mailto:fsmith3@rvaschools.net) or [Nurse Ta'Meia Farina](mailto:tfarina@rvaschools.net)  
+
+##### Data and Code:
+
+[![Data](assets/gs_32px.png "Google Sheets Data")](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing)
+
+[![Code](assets/GitHub-Mark-32px.png "GitHub Repo")](https://github.com/aejolene/School_COVID_Dashboard)
 
 
 
