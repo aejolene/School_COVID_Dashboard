@@ -32,7 +32,10 @@ ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
 # to periodically refresh the underlying data.
 ph_data <- read_sheet(ss, sheet = "dashboard_data") %>%
   mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive")) %>%
-  mutate("week" = floor_date(Date_Pos_Test, "week", week_start = 1))
+  mutate("week" = floor_date(Date_Pos_Test, "week", week_start = 1)) %>% 
+  mutate(Grade = factor(Grade, levels = c('K', '1', '2', '3', '4', '5')))
+
+#ph_data$"Grade" = factor(ph_data$"Grade", levels = c('K', '1', '2', '3', '4', '5'))
 
 fac_data <- read_sheet(ss, sheet = "faculty_staff_cases") %>%
   mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive"))
@@ -102,9 +105,10 @@ renderPlot({
 
   filteredGrade %>%
     ggplot() +
-    aes(x = Date_Pos_Test, fill = Grade) +
-    geom_bar() +
+    aes(x = as_date(Date_Pos_Test), fill = Grade) +
+    geom_bar(width = 0.98) +
     scale_y_continuous(breaks = integer_breaks()) +
+    scale_x_date(labels=date_format ("%b %d"), breaks=date_breaks("1 day")) +
     scale_fill_brewer(palette = "Paired") +
     labs(x = "Date", y = "Positive Tests") +
     theme_minimal() +
@@ -130,9 +134,10 @@ renderPlot({
   filteredGrade %>%
     #filter(Grade == input$grade) %>%
     ggplot() +
-    aes(x = Date_Pos_Test, fill = Teacher) +
-    geom_bar() +
+    aes(x = as_date(Date_Pos_Test), fill = Teacher) +
+    geom_bar(width = 0.98) +
     scale_y_continuous(breaks = integer_breaks()) +
+    scale_x_date(labels=date_format ("%b %d"), breaks=date_breaks("1 day")) +
     scale_fill_brewer(palette = "Paired") +
     labs(x = "Date", y = "Positive Tests") +
     theme_minimal() +
@@ -202,10 +207,9 @@ radioButtons("grade2", "Refine by Grade:",
 Column {data-width=500}
 -----------------------------------------------------------------------
 
-### By Grade
+### Weekly by Grade
 
 ```{r}
-
 renderPlot({
   filteredGrade <- ph_data
 
@@ -215,43 +219,15 @@ renderPlot({
 
   filteredGrade %>%
     ggplot() +
-    aes(x = Date_Pos_Test, fill = Grade) +
+    aes(x = as_date(week), fill = Grade) +
     geom_bar() +
-    scale_y_continuous(breaks = integer_breaks()) +
     scale_fill_brewer(palette = "Paired") +
-    labs(x = "Date", y = "Positive Tests") +
+    scale_x_date(labels=date_format ("%b %d"), breaks=date_breaks("1 week")) +
+    labs(x = "Week (begins on Monday)", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
-
+  
 })
-
-```
-
-
-### By Teacher
-
-```{r}
-
-renderPlot({
-  filteredGrade <- ph_data
-
-  if (input$grade2 != "All") {
-    filteredGrade <- filteredGrade %>% filter(Grade == input$grade2)
-  }
-
-  filteredGrade %>%
-    #filter(Grade == input$grade) %>%
-    ggplot() +
-    aes(x = Date_Pos_Test, fill = Teacher) +
-    geom_bar() +
-    scale_y_continuous(breaks = integer_breaks()) +
-    scale_fill_brewer(palette = "Paired") +
-    labs(x = "Date", y = "Positive Tests") +
-    theme_minimal() +
-    theme(text = element_text(size = 16))
-
-})
-
 ```
 
 
