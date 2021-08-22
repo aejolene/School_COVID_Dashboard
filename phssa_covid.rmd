@@ -31,7 +31,8 @@ ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
 # Google sheet is edited, however, there might be a less resource-intensive way
 # to periodically refresh the underlying data.
 ph_data <- read_sheet(ss, sheet = "dashboard_data") %>% 
-  mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive"))
+  mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive")) %>% 
+  mutate("week" = floor_date(Date_Pos_Test, "week", week_start = 1))
 
 fac_data <- read_sheet(ss, sheet = "faculty_staff_cases") %>% 
   mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive"))
@@ -189,6 +190,31 @@ renderValueBox({
 
 renderValueBox({
   valueBox(value = nrow(fac_data))
+})
+
+```
+
+Weekly Change
+=====================================  
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Cases Per Week
+
+```{r}
+
+renderPlot({
+
+  ph_data %>%
+    ggplot() +
+    aes(x = week, fill = Grade) +
+    geom_bar() +
+    scale_fill_brewer(palette = "Blues") +
+    labs(x = "Week (Begin on Mondays)", y = "Positive Tests") +
+    theme_minimal() +
+    theme(text = element_text(size = 16))
+  
 })
 
 ```
