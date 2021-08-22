@@ -194,7 +194,7 @@ This page shows information about all COVID-19 cases over time.
 
 ```{r}
 
-radioButtons("grade", "Refine by Grade:",
+radioButtons("grade2", "Refine by Grade:",
                         choices=c("All", "K", "1", "2", "3", "4", "5"))
 
 ```
@@ -209,8 +209,8 @@ Column {data-width=500}
 renderPlot({
   filteredGrade <- ph_data
 
-  if (input$grade != "All") {
-    filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
+  if (input$grade2 != "All") {
+    filteredGrade <- filteredGrade %>% filter(Grade == input$grade2)
   }
 
   filteredGrade %>%
@@ -235,8 +235,8 @@ renderPlot({
 renderPlot({
   filteredGrade <- ph_data
 
-  if (input$grade != "All") {
-    filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
+  if (input$grade2 != "All") {
+    filteredGrade <- filteredGrade %>% filter(Grade == input$grade2)
   }
 
   filteredGrade %>%
