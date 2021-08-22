@@ -30,16 +30,17 @@ ss <- "1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0"
 # setting read_sheet in ph_data makes the dashboard update instantly when the
 # Google sheet is edited, however, there might be a less resource-intensive way
 # to periodically refresh the underlying data.
-ph_data <- read_sheet(ss, sheet = "dashboard_data") %>% 
+ph_data <- read_sheet(ss, sheet = "dashboard_data") %>%
+  mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive")) %>%
+  mutate("week" = floor_date(Date_Pos_Test, "week", week_start = 1))
+
+fac_data <- read_sheet(ss, sheet = "faculty_staff_cases") %>%
   mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive"))
 
-fac_data <- read_sheet(ss, sheet = "faculty_staff_cases") %>% 
-  mutate("Status" = if_else(`Inactive_Date` > today(), "Active", "Inactive"))
+quar_data <- read_sheet(ss, sheet = "quarantined_classrooms")
 
-quar_data <- read_sheet(ss, sheet = "quarantined_classrooms") 
-
-updateTime <- read_sheet(ss, sheet = "info", range = "F5", col_names = FALSE) %>% 
-  rename("time" = "...1") %>% 
+updateTime <- read_sheet(ss, sheet = "info", range = "F5", col_names = FALSE) %>%
+  rename("time" = "...1") %>%
   mutate(time = format(time, "%m/%d/%Y %I:%M%p"))
 
 
@@ -79,7 +80,7 @@ Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7F
 
 ```{r}
 
-radioButtons("grade", "Refine by Grade:", 
+radioButtons("grade", "Refine by Grade:",
                         choices=c("All", "K", "1", "2", "3", "4", "5"))
 
 ```
@@ -92,13 +93,13 @@ Column {data-width=500}
 ```{r}
 
 renderPlot({
-  filteredGrade <- ph_data %>% 
+  filteredGrade <- ph_data %>%
     filter(Status == "Active")
-  
+
   if (input$grade != "All") {
     filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
   }
-  
+
   filteredGrade %>%
     ggplot() +
     aes(x = Date_Pos_Test, fill = Grade) +
@@ -108,7 +109,7 @@ renderPlot({
     labs(x = "Date", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
-  
+
 })
 
 ```
@@ -119,13 +120,13 @@ renderPlot({
 ```{r}
 
 renderPlot({
-  filteredGrade <- ph_data %>% 
+  filteredGrade <- ph_data %>%
     filter(Status == "Active")
-  
+
   if (input$grade != "All") {
     filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
   }
-  
+
   filteredGrade %>%
     #filter(Grade == input$grade) %>%
     ggplot() +
@@ -136,7 +137,7 @@ renderPlot({
     labs(x = "Date", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
-  
+
 })
 
 ```
@@ -175,7 +176,7 @@ renderValueBox({
 
 ```{r}
 
-activeFac <- fac_data %>% 
+activeFac <- fac_data %>%
   filter(Status == "Active")
 
 renderValueBox({
@@ -193,7 +194,7 @@ This page shows information about all COVID-19 cases over time.
 
 ```{r}
 
-radioButtons("grade", "Refine by Grade:", 
+radioButtons("grade", "Refine by Grade:",
                         choices=c("All", "K", "1", "2", "3", "4", "5"))
 
 ```
@@ -207,11 +208,11 @@ Column {data-width=500}
 
 renderPlot({
   filteredGrade <- ph_data
-  
+
   if (input$grade != "All") {
     filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
   }
-  
+
   filteredGrade %>%
     ggplot() +
     aes(x = Date_Pos_Test, fill = Grade) +
@@ -221,7 +222,7 @@ renderPlot({
     labs(x = "Date", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
-  
+
 })
 
 ```
@@ -233,11 +234,11 @@ renderPlot({
 
 renderPlot({
   filteredGrade <- ph_data
-  
+
   if (input$grade != "All") {
     filteredGrade <- filteredGrade %>% filter(Grade == input$grade)
   }
-  
+
   filteredGrade %>%
     #filter(Grade == input$grade) %>%
     ggplot() +
@@ -248,7 +249,7 @@ renderPlot({
     labs(x = "Date", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
-  
+
 })
 
 ```
@@ -299,20 +300,20 @@ Cases Detail Tables
 Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
 
 ```{r}
-ph_data_format <- ph_data %>% 
+ph_data_format <- ph_data %>%
   select("Date Positive" = Date_Pos_Test, Grade, Teacher, "Last in School" = Last_in_school, "Status") %>%
   arrange(desc(`Date Positive`))
-  
+
 ph_data_format$`Date Positive` <- as_date(ph_data_format$`Date Positive`)
 ph_data_format$`Last in School` <- as_date(ph_data_format$`Last in School`)
 
 datatable(ph_data_format,
           options = list(
-            columnDefs = 
-              list(list(className = 'dt-center', 
+            columnDefs =
+              list(list(className = 'dt-center',
                         targets = "_all")),
             pageLength = 10
-           )) %>% 
+           )) %>%
            formatStyle("Status", backgroundColor = styleEqual("Active", "rgb(251,154,153,1)"))
 
 ```
@@ -321,7 +322,7 @@ datatable(ph_data_format,
 
 
 ```{r}
-fac_data_format <- fac_data %>% 
+fac_data_format <- fac_data %>%
   select("Date Positive" = Date_Pos_Test, "Last in School" = Last_in_school, "Status") %>%   arrange(desc(`Date Positive`))
 
 fac_data_format$`Date Positive` <- as_date(fac_data_format$`Date Positive`)
@@ -329,22 +330,22 @@ fac_data_format$`Last in School` <- as_date(fac_data_format$`Last in School`)
 
 datatable(fac_data_format,
           options = list(
-            columnDefs = 
-              list(list(className = 'dt-center', 
+            columnDefs =
+              list(list(className = 'dt-center',
                         targets = "_all")),
             pageLength = 10
-          ))  %>% 
+          ))  %>%
           formatStyle("Status", backgroundColor = styleEqual("Active", "rgb(251,154,153,1)"))
 ```
 Quarantines
-===================================== 
+=====================================
 ### Currently Quarantined Classrooms
 
-This table shows **actively** quarantined classes. Quarantined students should obtain a PCR test **on or after** the Earliest Test Date shown. 
-  
+This table shows **actively** quarantined classes. Quarantined students should obtain a PCR test **on or after** the Earliest Test Date shown.
+
 08/19/2021 NOTE:  
 Some of the dates below have been corrected. The basis of testing date is the date of first exposure. Testing should occur 5-7 days from first exposure.  
-  
+
 Quarantine Guidance:  
 
 [CDC guidance](https://www.cdc.gov/coronavirus/2019-ncov/if-you-are-sick/quarantine.html)  
@@ -363,7 +364,7 @@ quar_data_format <- quar_data %>%
     "Date of Exposure" = Date_of_Exposure,
     "Earliest Test Date" = Earliest_Test_Date
   ) %>%   
-  arrange(`Return Date`) %>% 
+  arrange(`Return Date`) %>%
   filter(as_date(`Return Date`) >= today())
 
 quar_data_format$`Begin Date` <- as_date(quar_data_format$`Begin Date`)
@@ -375,8 +376,8 @@ quar_data_format$`Earliest Test Date` <- as_date(quar_data_format$`Earliest Test
 
 datatable(quar_data_format,
           options = list(
-            columnDefs = 
-              list(list(className = 'dt-center', 
+            columnDefs =
+              list(list(className = 'dt-center',
                         targets = "_all")),
             pageLength = 25
           ))
@@ -420,6 +421,6 @@ The date below reflects any edit to the back-end spreadsheet, not necessarily th
 renderValueBox({
   valueBox(value = updateTime,
            caption = )
-  
+
 })
 ```
