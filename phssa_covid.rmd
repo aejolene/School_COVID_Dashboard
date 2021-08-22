@@ -110,7 +110,7 @@ renderPlot({
     scale_y_continuous(breaks = integer_breaks()) +
     scale_x_date(labels=date_format ("%b %d"), breaks=date_breaks("1 day")) +
     scale_fill_brewer(palette = "Paired") +
-    labs(x = "Date", y = "Positive Tests") +
+    labs(x = "", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
 
@@ -139,7 +139,7 @@ renderPlot({
     scale_y_continuous(breaks = integer_breaks()) +
     scale_x_date(labels=date_format ("%b %d"), breaks=date_breaks("1 day")) +
     scale_fill_brewer(palette = "Paired") +
-    labs(x = "Date", y = "Positive Tests") +
+    labs(x = "", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
 
@@ -223,7 +223,7 @@ renderPlot({
     geom_bar() +
     scale_fill_brewer(palette = "Paired") +
     scale_x_date(labels=date_format ("%b %d"), breaks=date_breaks("1 week")) +
-    labs(x = "Week (begins on Monday)", y = "Positive Tests") +
+    labs(x = "Week (Mon-Sun)", y = "Positive Tests") +
     theme_minimal() +
     theme(text = element_text(size = 16))
   
@@ -233,7 +233,7 @@ renderPlot({
 
 Column {data-width=100}
 -----------------------------------------------------------------------
-Total Student Cases are cumulative, beginning August 8, 2021.  
+Total Student Cases are cumulative, beginning August 2, 2021.  
 
 ### Total Student Cases
 
@@ -269,11 +269,12 @@ renderValueBox({
 
 ```
 
-Cases Detail Tables
+Cases Detail Tables {data-orientation=rows}
 =====================================  
-### Student Cases
+Row {.tabset .tabset-fade}
+-------------------------------------
 
-Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
+### Student Cases
 
 ```{r}
 ph_data_format <- ph_data %>%
@@ -288,7 +289,7 @@ datatable(ph_data_format,
             columnDefs =
               list(list(className = 'dt-center',
                         targets = "_all")),
-            pageLength = 10
+            pageLength = 25
            )) %>%
            formatStyle("Status", backgroundColor = styleEqual("Active", "rgb(251,154,153,1)"))
 
@@ -309,7 +310,7 @@ datatable(fac_data_format,
             columnDefs =
               list(list(className = 'dt-center',
                         targets = "_all")),
-            pageLength = 10
+            pageLength = 25
           ))  %>%
           formatStyle("Status", backgroundColor = styleEqual("Active", "rgb(251,154,153,1)"))
 ```
@@ -368,6 +369,7 @@ Help & Info {data-orientation=rows}
 
 #### Resources
 
+* [PHSSA Reopening Plan](https://drive.google.com/file/d/1E8WCTKUQVOwL9juK9sN0Fy_fkrvyBhl1/view)
 * [CDC Guidance for COVID-19 Prevention in K-12 Schools](https://www.cdc.gov/coronavirus/2019-ncov/community/schools-childcare/k-12-guidance.html)
 * [CDC Mask Guidance](https://www.cdc.gov/coronavirus/2019-ncov/prevent-getting-sick/diy-cloth-face-coverings.html)
 * [VDH COVID-19 Resources](https://www.vdh.virginia.gov/coronavirus/#COVID-19-resources)
