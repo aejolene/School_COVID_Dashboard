@@ -6,8 +6,9 @@ output:
     orientation: columns
     vertical_layout: fill
     logo: assets/small_tree_48.png
-resource_files:
-- assets/small_tree.png
+resource_files: 
+  - tools
+
 ---
 
 ```{r setup, include=FALSE}
@@ -81,6 +82,8 @@ Data is updated by the PHSSA Board of Directors as soon as it is verified. Cases
 
 Data is available for [download](https://docs.google.com/spreadsheets/d/1UJ_Ak7FripKPbH8L9THvfyNpfmqe21u_kJ9NLPaIid0/edit?usp=sharing).
 
+To report test results or ask questions related to contact tracing, isolation and quarantine protocols, contact [Nurse Ta'Meia Farina](mailto:tfarina@rvaschools.net) and parent liaison [Kristina Santiago](mailto:ksantiag@rvaschools.net).  
+
 ```{r}
 
 radioButtons("grade", "Refine by Grade:",
@@ -112,7 +115,7 @@ renderPlot({
     scale_fill_brewer(palette = "Paired") +
     labs(x = "", y = "Positive Tests") +
     theme_minimal() +
-    theme(text = element_text(size = 16))
+    theme(text = element_text(size = 16), axis.text.x = element_text(angle = 45))
 
 })
 
@@ -141,7 +144,7 @@ renderPlot({
     scale_fill_brewer(palette = "Paired") +
     labs(x = "", y = "Positive Tests") +
     theme_minimal() +
-    theme(text = element_text(size = 16))
+    theme(text = element_text(size = 16), axis.text.x = element_text(angle = 45))
 
 })
 
@@ -207,7 +210,7 @@ radioButtons("grade2", "Refine by Grade:",
 Column {data-width=500}
 -----------------------------------------------------------------------
 
-### Weekly by Grade
+### Weekly Student Cases by Grade
 
 ```{r}
 renderPlot({
@@ -225,7 +228,7 @@ renderPlot({
     scale_x_date(labels=date_format ("%b %d"), breaks=date_breaks("1 week")) +
     labs(x = "Week (Mon-Sun)", y = "Positive Tests") +
     theme_minimal() +
-    theme(text = element_text(size = 16))
+    theme(text = element_text(size = 16), axis.text.x = element_text(angle = 45))
   
 })
 ```
@@ -318,17 +321,11 @@ Quarantines
 =====================================
 ### Currently Quarantined Classrooms
 
-This table shows **actively** quarantined classes. Quarantined students should obtain a PCR test **on or after** the Earliest Test Date shown.
+This table shows **actively** quarantined classes. Testing should occur 5 days from first exposure. Quarantined students should obtain a PCR test on the Ideal Test Date. Due to testing limitations, a test within 3-5 days after an exposure is acceptable.
 
 08/19/2021 NOTE:  
-Some of the dates below have been corrected. The basis of testing date is the date of first exposure. Testing should occur 5-7 days from first exposure.  
+Some of the dates below have been corrected. The basis of testing date is the date of first exposure. 
 
-Quarantine Guidance:  
-
-[CDC guidance](https://www.cdc.gov/coronavirus/2019-ncov/if-you-are-sick/quarantine.html)  
-- Stay home for 14 days after your last contact with a person who has COVID-19.  
-- Watch for fever (100.4◦F), cough, shortness of breath, or other symptoms of COVID-19.  
-- If possible, stay away from people you live with, especially people who are at higher risk for getting very sick from COVID-19.  
 
 ```{r}
 
@@ -339,15 +336,15 @@ quar_data_format <- quar_data %>%
     "Begin Date" = Begin_Date,
     "Return Date" = Return_Date,
     "Date of Exposure" = Date_of_Exposure,
-    "Earliest Test Date" = Earliest_Test_Date
+    "Ideal Test Date" = Earliest_Test_Date
   ) %>%   
   arrange(`Return Date`) %>%
-  filter(as_date(`Return Date`) >= today())
+  filter(as_date(`Return Date`) > today())
 
 quar_data_format$`Begin Date` <- as_date(quar_data_format$`Begin Date`)
 quar_data_format$`Return Date` <- as_date(quar_data_format$`Return Date`)
 quar_data_format$`Date of Exposure` <- as_date(quar_data_format$`Date of Exposure`)
-quar_data_format$`Earliest Test Date` <- as_date(quar_data_format$`Earliest Test Date`)
+quar_data_format$`Ideal Test Date` <- as_date(quar_data_format$`Ideal Test Date`)
 
 
 
@@ -359,6 +356,8 @@ datatable(quar_data_format,
             pageLength = 25
           ))
 
+## 2022-01-01 adjusted Earliest Test Date to Ideal Test Date to reflect VDH recommendations. 
+
 ```
 
 
@@ -367,18 +366,26 @@ Help & Info {data-orientation=rows}
 
 [![](assets/long_logo.png)](http://www.patrickhenrycharter.org)
 
-#### Resources
 
-* [PHSSA Reopening Plan](https://drive.google.com/file/d/1E8WCTKUQVOwL9juK9sN0Fy_fkrvyBhl1/view)
-* [CDC Guidance for COVID-19 Prevention in K-12 Schools](https://www.cdc.gov/coronavirus/2019-ncov/community/schools-childcare/k-12-guidance.html)
-* [CDC Mask Guidance](https://www.cdc.gov/coronavirus/2019-ncov/prevent-getting-sick/diy-cloth-face-coverings.html)
-* [VDH COVID-19 Resources](https://www.vdh.virginia.gov/coronavirus/#COVID-19-resources)
+#### Decision Tree
+Find out what to do if your student tests positive, is exposed, and more. [Link](tools/decision_tree.html)
+
+#### Resources
+* School-Specific Guidance
+    + [PHSSA Reopening Plan](https://drive.google.com/file/d/1E8WCTKUQVOwL9juK9sN0Fy_fkrvyBhl1/view) 
+* From the CDC
+    + [CDC Guidance for COVID-19 Prevention in K-12 Schools](https://www.cdc.gov/coronavirus/2019-ncov/community/schools-childcare/k-12-guidance.html) 
+    + [CDC Mask Guidance](https://www.cdc.gov/coronavirus/2019-ncov/prevent-getting-sick/diy-cloth-face-coverings.html) 
+    + [COVID-19 pandemic: Helping young children and parents transition back to school](https://www.cdc.gov/childrensmentalhealth/features/COVID-19-helping-children-transition-back-to-school.html)
+* From VDH
+    + [VDH COVID-19 Resources](https://www.vdh.virginia.gov/coronavirus/#COVID-19-resources) 
+    + [Isolation and Quarantine: What's the Difference?](https://www.vdh.virginia.gov/content/uploads/sites/182/2020/07/Isolation-and-Quarantine-Whats-the-difference_1.pdf) 
 
 #### Questions?
 
 For questions about this data, contact [Ann-Alyssa Hill](mailto:ann-alyssa.hill@patrickhenrycharter.org)  
 
-For questions about your PHSSA student and COVID-19, contact [Principal Fatima Smith](mailto:fsmith3@rvaschools.net) or [Nurse Ta'Meia Farina](mailto:tfarina@rvaschools.net)  
+To report test results or ask questions related to contact tracing, isolation and quarantine protocols, contact [Nurse Ta'Meia Farina](mailto:tfarina@rvaschools.net) and parent liaison [Kristina Santiago](mailto:ksantiag@rvaschools.net).  
 
 ##### Data and Code:
 
@@ -402,3 +409,5 @@ renderValueBox({
 
 })
 ```
+
+
